@@ -2,7 +2,7 @@ use clap::{App, AppSettings, Arg};
 use system_theme::*;
 
 fn main() {
-    let config = Config::from_file("config.toml").expect("Failed to load config");
+    let config = Config::from_file("/etc/system_theme_config.toml").expect("Failed to load config");
     let current_theme = match list_current_theme(&config.kdeglobals_path, &config.pattern) {
         Ok(theme) => theme,
         Err(err) => {
@@ -36,6 +36,7 @@ fn main() {
     }
 
     if matches.is_present("toggle") {
+        println!("{}", current_theme);
         if current_theme == config.dark_theme {
             if let Err(err) = toggle_current_theme(&config.light_theme) {
                 eprint!("Error toggling theme: {}", err);
