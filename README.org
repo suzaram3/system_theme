@@ -5,33 +5,54 @@
 #+OPTIONS: toc:2
 
 * TABLE OF CONTENTS: :toc:
+- [[#introduction][INTRODUCTION]]
+- [[#dependencies][DEPENDENCIES]]
 - [[#purpose][PURPOSE]]
-- [[#list-theme][LIST THEME]]
-- [[#][]]
+- [[#program-overview][Program Overview]]
+- [[#error-handling][Error Handling]]
+- [[#example-usage][Example Usage]]
+- [[#conclusion][Conclusion]]
+
+* INTRODUCTION
+This document provides an overview and explanation of the "System Theme" program written in Rust. The program is designed to manage and toggle system themes based on user input.
+
+* DEPENDENCIES
+The program depends on the following external libraries:
+  - [[https://docs.rs/clap/latest/clap/][clap]]: A command-line argument parsing library for Rust. 
 
 * PURPOSE
 This program is for switching themes from light to dark in a KDE desktop environment.
 
-* LIST THEME
+* Program Overview
+  The program consists of a single Rust source file, typically named `main.rs`. It defines a main function that orchestrates the program's logic. Here's an overview of the program's components:
 
-This helper function lists the current theme applied to the key =LookAndFeelPackge= in the kdeglobals config file
-#+begin_src rust
+  - Configuration loading: The program loads configuration settings from a TOML file named `config.toml` using the `Config` struct defined in the `system_theme` module.
 
-pub fn list_current_theme(file_path: &str, pattern: &str) -> Result<String, io::Error> {
-    let mut file = File::open(file_path)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
+  - Theme discovery: The program retrieves the current system theme by calling the `list_current_theme` function from the `system_theme` module. If successful, it stores the current theme in the `current_theme` variable.
 
-    let mut current_theme = String::new();
-    for line in contents.lines() {
-        if line.to_lowercase().contains(pattern) {
-            current_theme = line.split('=').nth(1).unwrap().trim().to_string();
-            break;
-        }
-    }
-    Ok(current_theme)
-}
+  - Command-line argument parsing: The program uses the `clap` library to parse command-line arguments. It defines two possible arguments:
+    - `--list` or `-l`: Lists the current system theme.
+    - `--toggle` or `-t`: Toggles the current system theme between light and dark.
 
-#+end_src
+  - Execution logic: Based on the parsed command-line arguments and the retrieved current theme, the program executes the corresponding logic:
+    - If the `--list` argument is present, it prints the current system theme.
+    - If the `--toggle` argument is present, it toggles the current system theme between light and dark based on the configuration settings.
 
-* 
+* Error Handling
+  The program implements error handling to gracefully handle failures during configuration loading, theme discovery, and theme toggling. If an error occurs, an error message is printed to the standard error stream (`stderr`).
+
+* Example Usage
+  Here's how you can use the program:
+  - To list the current system theme:
+    ```
+    $ system_theme --list
+    ```
+
+  - To toggle the current system theme:
+    ```
+    $ system_theme --toggle
+    ```
+
+* Conclusion
+  The "System Theme" program provides a convenient way to manage system themes in a Rust environment. It leverages command-line arguments for user interaction and implements error handling to ensure robustness.
+
