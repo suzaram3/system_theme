@@ -1,0 +1,3 @@
+[kde_config]
+kdeglobals_path = "/home/rinzler/.config/kdeglobals"
+pattern = "LookAndFeelPackage"
