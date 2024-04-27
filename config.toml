@@ -1,3 +1,7 @@
 [kde_config]
 kdeglobals_path = "/home/rinzler/.config/kdeglobals"
 pattern = "LookAndFeelPackage"
+
+[kde_themes]
+dark = "org.manjaro.breath-dark.desktop"
+light = "org.manjaro.breath-light.desktop"

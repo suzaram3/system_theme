@@ -3,6 +3,13 @@ use system_theme::*;
 
 fn main() {
     let config = Config::from_file("config.toml").expect("Failed to load config");
+    let current_theme = match list_current_theme(&config.kdeglobals_path, &config.pattern) {
+        Ok(theme) => theme,
+        Err(err) => {
+            eprintln!("Error: {}", err);
+            return;
+        }
+    };
 
     let matches = App::new("System Theme")
         .setting(AppSettings::ArgRequiredElseHelp)
@@ -25,10 +32,20 @@ fn main() {
         .get_matches();
 
     if matches.is_present("list") {
-        let contents = list_current_theme(&config.kdeglobals_path, &config.pattern);
-        match contents {
-            Ok(theme) => println!("Current system theme: {}", theme),
-            Err(err) => eprint!("Error: {}", err),
+        println!("{}", current_theme);
+    }
+
+    if matches.is_present("toggle") {
+        if current_theme == config.dark_theme {
+            if let Err(err) = toggle_current_theme(&config.light_theme) {
+                eprint!("Error toggling theme: {}", err);
+            }
+        } else if current_theme == config.light_theme {
+            if let Err(err) = toggle_current_theme(&config.dark_theme) {
+                eprint!("Error toggling theme: {}", err);
+            }
+        } else {
+            println!("Current theme does not have logic to switch to")
         }
     }
 }

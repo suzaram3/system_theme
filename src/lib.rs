@@ -1,11 +1,14 @@
 use std::fs::File;
 use std::io::{self, Read};
+use std::process::Command;
 use toml::Value;
 
 #[derive(Debug)]
 pub struct Config {
     pub kdeglobals_path: String,
     pub pattern: String,
+    pub dark_theme: String,
+    pub light_theme: String,
 }
 
 impl Config {
@@ -24,10 +27,22 @@ impl Config {
             .ok_or("pattern not found in config file")?
             .to_string()
             .to_lowercase();
+        let dark_theme = toml_value["kde_themes"]["dark"]
+            .as_str()
+            .ok_or("dark theme not found in config file")?
+            .to_string()
+            .to_lowercase();
+        let light_theme = toml_value["kde_themes"]["light"]
+            .as_str()
+            .ok_or("light theme not found in config file")?
+            .to_string()
+            .to_lowercase();
 
         Ok(Config {
             kdeglobals_path,
             pattern,
+            dark_theme,
+            light_theme,
         })
     }
 }
@@ -47,29 +62,59 @@ pub fn list_current_theme(file_path: &str, pattern: &str) -> Result<String, io::
     Ok(current_theme)
 }
 
+pub fn toggle_current_theme(theme: &str) -> Result<(), io::Error> {
+    let output = Command::new("lookandfeeltool")
+        .arg("-a")
+        .arg(theme)
+        .output()
+        .expect("Faield to execute command");
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        let error_message = String::from_utf8_lossy(&output.stderr);
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to execute command: {}", error_message),
+        ))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_list_current_theme() {
-        let temp_file_path = "test_file.txt";
-        let temp_file_content = "Some line\nLookAndFeelPackage=ThemeName\nAnother line";
-        std::fs::write(temp_file_path, temp_file_content).expect("Failed to write temp file");
+    fn test_list_current_theme_light() {
+        let config = Config::from_file("config.toml").expect("Failed to load config");
 
-        let result = list_current_theme(temp_file_path, "lookandfeelpackage").unwrap();
+        let result = list_current_theme(&config.kdeglobals_path, &config.pattern).unwrap();
 
-        assert_eq!(result, "ThemeName".to_string());
-
-        std::fs::remove_file(temp_file_path).expect("Failed to remove temp file");
+        assert_eq!(result, "org.manjaro.breath-light.desktop".to_string());
     }
 
     #[test]
-    fn test_list_current_theme_light() {
-        let temp_file_path = "/home/rinzler/.config/kdeglobals";
+    fn test_list_current_theme_dark() {
+        let config = Config::from_file("config.toml").expect("Failed to load config");
 
-        let result = list_current_theme(temp_file_path, "lookandfeelpackage").unwrap();
+        let result = list_current_theme(&config.kdeglobals_path, &config.pattern).unwrap();
 
-        assert_eq!(result, "org.manjaro.breath-light.desktop".to_string());
+        assert_eq!(result, "org.manjaro.breath-dark.desktop".to_string());
+    }
+
+    #[test]
+    fn test_toggle_theme_dark() {
+        let theme = "org.manjaro.breath-dark.desktop";
+        if let Err(err) = toggle_current_theme(theme) {
+            eprint!("Error toggling theme: {}", err);
+        }
+
+        #[test]
+        fn test_toggle_theme_light() {
+            let theme = "org.manjaro.breath-light.desktop";
+            if let Err(err) = toggle_current_theme(theme) {
+                eprint!("Error toggling theme: {}", err);
+            }
+        }
     }
 }
