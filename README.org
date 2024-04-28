@@ -1,4 +1,4 @@
-#+TITLE: System Theme 
+#+TITLE: SYSTEM THEME 
 #+AUTHOR: Mitch Suzara
 #+DATE: 2024-04-27
 #+STARTUP: showeverything
@@ -15,9 +15,14 @@
 
 * INTRODUCTION
 This document provides an overview and explanation of the "System Theme" program written in Rust. The program is designed to manage and toggle system themes based on user input.
+
 * DEPENDENCIES
 The program depends on the following external libraries:
   - [[https://docs.rs/clap/latest/clap/][clap]]: A command-line argument parsing library for Rust. 
+  - [[Command line tool to apply global theme packages for changing the look and feel.][toml]]: A serde-compatible TOML decoder and encoder for Rust.
+  - =lookandfeeltool=: Command line tool to apply global theme packages for changing the look and feel.
+
+
 * PURPOSE
 This program is for switching themes from light to dark in a KDE desktop environment.
 
