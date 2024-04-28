@@ -42,13 +42,10 @@ This program is for switching themes from light to dark in a KDE desktop environ
 * EXAMPLE USAGE
   Here's how you can use the program:
   - To list the current system theme:
-    #+begin_src sh
-    system_theme --list
-    #+end_src
+    =system_theme --list=
 
-    #+begin_src sh
-    system_theme --toggle
-    #+end_src
+  - To toggle the current system theme:
+    =system_theme --toggle=
 
 * CONCLUSION
   The "System Theme" program provides a convenient way to manage system themes in a Rust environment. It leverages command-line arguments for user interaction and implements error handling to ensure robustness.
