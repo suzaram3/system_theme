@@ -1,7 +1,8 @@
-use std::fs::File;
+use std::error::Error;
+use std::fs::{self, File};
 use std::io::{self, Read};
 use std::process::Command;
-use toml::Value;
+use toml::{map::Map, Value};
 
 #[derive(Debug)]
 pub struct Config {
@@ -9,6 +10,7 @@ pub struct Config {
     pub pattern: String,
     pub dark_theme: String,
     pub light_theme: String,
+    pub alacritty_toml_path: String,
 }
 
 impl Config {
@@ -37,32 +39,53 @@ impl Config {
             .ok_or("light theme not found in config file")?
             .to_string()
             .to_lowercase();
+        let alacritty_toml_path = toml_value["alacritty"]["config_path"]
+            .as_str()
+            .ok_or("alacritty file path not found in config file")?
+            .to_string()
+            .to_lowercase();
 
         Ok(Config {
             kdeglobals_path,
             pattern,
             dark_theme,
             light_theme,
+            alacritty_toml_path,
         })
     }
 }
 
-pub fn list_current_theme(file_path: &str, pattern: &str) -> Result<String, io::Error> {
+pub fn list_current_kde_theme(file_path: &str, pattern: &str) -> Result<String, io::Error> {
     let mut file = File::open(file_path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
-    let mut current_theme = String::new();
+    let mut kde_current_theme = String::new();
     for line in contents.lines() {
         if line.to_lowercase().contains(pattern) {
-            current_theme = line.split('=').nth(1).unwrap().trim().to_string();
+            kde_current_theme = line.split('=').nth(1).unwrap().trim().to_string();
             break;
         }
     }
-    Ok(current_theme)
+    Ok(kde_current_theme)
 }
 
-pub fn toggle_current_theme(theme: &str) -> Result<(), io::Error> {
+pub fn list_current_alacritty_theme(file_path: &str, pattern: &str) -> Result<String, io::Error> {
+    let mut file = File::open(file_path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+
+    let mut alacritty_current_theme = String::new();
+    for line in contents.lines() {
+        if line.to_lowercase().contains(pattern) {
+            alacritty_current_theme = line.split('=').nth(1).unwrap().trim().to_string();
+            break;
+        }
+    }
+    Ok(alacritty_current_theme)
+}
+
+pub fn toggle_kde_theme(theme: &str) -> Result<(), io::Error> {
     let output = Command::new("lookandfeeltool")
         .arg("-a")
         .arg(theme)
@@ -80,6 +103,33 @@ pub fn toggle_current_theme(theme: &str) -> Result<(), io::Error> {
     }
 }
 
+pub fn toggle_alacritty_theme(current_theme: &str, file_path: &str) -> Result<(), Box<dyn Error>> {
+    let contents = fs::read_to_string(file_path)?;
+    let mut config: Map<String, Value> = toml::from_str(&contents)?;
+
+    if let Some(import) = config.get_mut("import") {
+        if let Value::Array(ref mut imports) = *import {
+            if let Some(first_import) = imports.get_mut(0) {
+                if let Value::String(import_value) = first_import {
+                    if current_theme == "org.manjaro.breath-dark.desktop" {
+                        *import_value =
+                            "~/.config/alacritty/alacritty-theme/themes/solarized_light.toml"
+                                .to_string();
+                    } else if current_theme == "org.manjaro.breath-light.desktop" {
+                        *import_value =
+                            "~/.config/alacritty/alacritty-theme/themes/solarized_dark.toml"
+                                .to_string();
+                    }
+                }
+            }
+        }
+    }
+    let updated_contents = toml::to_string_pretty(&config)?;
+    fs::write(file_path, updated_contents)?;
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -88,33 +138,8 @@ mod tests {
     fn test_list_current_theme_light() {
         let config = Config::from_file("config.toml").expect("Failed to load config");
 
-        let result = list_current_theme(&config.kdeglobals_path, &config.pattern).unwrap();
+        let result = list_current_kde_theme(&config.kdeglobals_path, &config.pattern).unwrap();
 
         assert_eq!(result, "org.manjaro.breath-light.desktop".to_string());
-    }
-
-    #[test]
-    fn test_list_current_theme_dark() {
-        let config = Config::from_file("config.toml").expect("Failed to load config");
-
-        let result = list_current_theme(&config.kdeglobals_path, &config.pattern).unwrap();
-
-        assert_eq!(result, "org.manjaro.breath-dark.desktop".to_string());
-    }
-
-    #[test]
-    fn test_toggle_theme_dark() {
-        let theme = "org.manjaro.breath-dark.desktop";
-        if let Err(err) = toggle_current_theme(theme) {
-            eprint!("Error toggling theme: {}", err);
-        }
-
-        #[test]
-        fn test_toggle_theme_light() {
-            let theme = "org.manjaro.breath-light.desktop";
-            if let Err(err) = toggle_current_theme(theme) {
-                eprint!("Error toggling theme: {}", err);
-            }
-        }
     }
 }

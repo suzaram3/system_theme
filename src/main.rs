@@ -3,7 +3,7 @@ use system_theme::*;
 
 fn main() {
     let config = Config::from_file("/etc/system_theme_config.toml").expect("Failed to load config");
-    let current_theme = match list_current_theme(&config.kdeglobals_path, &config.pattern) {
+    let kde_current_theme = match list_current_kde_theme(&config.kdeglobals_path, &config.pattern) {
         Ok(theme) => theme,
         Err(err) => {
             eprintln!("Error: {}", err);
@@ -32,17 +32,20 @@ fn main() {
         .get_matches();
 
     if matches.is_present("list") {
-        println!("{}", current_theme);
+        println!("{}", kde_current_theme);
     }
 
     if matches.is_present("toggle") {
-        println!("{}", current_theme);
-        if current_theme == config.dark_theme {
-            if let Err(err) = toggle_current_theme(&config.light_theme) {
+        println!("{}", kde_current_theme);
+        if let Err(err) = toggle_alacritty_theme(&kde_current_theme, &config.alacritty_toml_path) {
+            eprint!("Error toggling Alacritty theme: {}", err);
+        }
+        if kde_current_theme == config.dark_theme {
+            if let Err(err) = toggle_kde_theme(&config.light_theme) {
                 eprint!("Error toggling theme: {}", err);
             }
-        } else if current_theme == config.light_theme {
-            if let Err(err) = toggle_current_theme(&config.dark_theme) {
+        } else if kde_current_theme == config.light_theme {
+            if let Err(err) = toggle_kde_theme(&config.dark_theme) {
                 eprint!("Error toggling theme: {}", err);
             }
         } else {

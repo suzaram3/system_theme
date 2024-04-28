@@ -5,3 +5,6 @@ pattern = "LookAndFeelPackage"
 [kde_themes]
 dark = "org.manjaro.breath-dark.desktop"
 light = "org.manjaro.breath-light.desktop"
+
+[alacritty]
+config_path = "/home/rinzler/.config/alacritty/alacritty.toml"
